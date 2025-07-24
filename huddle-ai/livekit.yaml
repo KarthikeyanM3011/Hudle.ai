@@ -1,0 +1,57 @@
+const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
+
+const livekitHost = process.env.LIVEKIT_URL || 'ws://localhost:7880';
+const apiKey = process.env.LIVEKIT_API_KEY || 'devkey';
+const apiSecret = process.env.LIVEKIT_API_SECRET || 'secret';
+
+const roomService = new RoomServiceClient(livekitHost, apiKey, apiSecret);
+
+function createAccessToken(roomName, participantName, permissions = {}) {
+    const at = new AccessToken(apiKey, apiSecret, {
+        identity: participantName,
+        ttl: '10h'
+    });
+
+    at.addGrant({
+        roomJoin: true,
+        room: roomName,
+        canPublish: permissions.canPublish !== false,
+        canSubscribe: permissions.canSubscribe !== false,
+        canPublishData: permissions.canPublishData !== false
+    });
+
+    return at.toJwt();
+}
+
+async function createRoom(roomName, options = {}) {
+    try {
+        const room = await roomService.createRoom({
+            name: roomName,
+            emptyTimeout: options.emptyTimeout || 300,
+            maxParticipants: options.maxParticipants || 10,
+            metadata: JSON.stringify(options.metadata || {})
+        });
+        return room;
+    } catch (error) {
+        if (error.message.includes('already exists')) {
+            return await roomService.listRooms([roomName]);
+        }
+        throw error;
+    }
+}
+
+async function deleteRoom(roomName) {
+    try {
+        await roomService.deleteRoom(roomName);
+    } catch (error) {
+        console.error('Error deleting room:', error);
+    }
+}
+
+module.exports = {
+    createAccessToken,
+    createRoom,
+    deleteRoom,
+    roomService,
+    livekitHost
+};

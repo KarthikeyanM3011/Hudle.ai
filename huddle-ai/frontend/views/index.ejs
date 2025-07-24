@@ -1,0 +1,229 @@
+<%- include('layout', { body: `
+    <!-- Hero Section -->
+    <section class="hero-section bg-gradient-primary text-white">
+        <div class="container py-5">
+            <div class="row align-items-center min-vh-75">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Transform Your Potential with AI Coaching
+                    </h1>
+                    <p class="lead mb-4">
+                        Create personalized AI coaches for interview preparation, sales training, language learning, 
+                        and professional development. Experience unlimited concurrent sessions with advanced AI technology.
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row gap-3">
+                        <a href="/auth/register" class="btn btn-light btn-lg px-4">
+                            <i class="fas fa-rocket me-2"></i>
+                            Get Started Free
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-lg px-4">
+                            <i class="fas fa-play me-2"></i>
+                            Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <img src="/images/hero-ai-coach.png" alt="AI Coach" class="img-fluid rounded-3 shadow-lg">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-primary opacity-10 rounded-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">Powerful AI Coaching Features</h2>
+                <p class="lead text-muted">Everything you need for effective coaching sessions</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                                <i class="fas fa-robot fa-2x"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Custom AI Coaches</h4>
+                            <p class="text-muted">Create unlimited AI coaches tailored to your specific needs. Choose from templates or build completely custom personalities.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                                <i class="fas fa-video fa-2x"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Live Coaching Sessions</h4>
+                            <p class="text-muted">Engage in real-time conversations with AI coaches through video, audio, or text. Support for multiple concurrent sessions.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Progress Tracking</h4>
+                            <p class="text-muted">Monitor your improvement with detailed analytics, session recordings, and personalized feedback from your AI coaches.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Coach Types Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">Popular Coach Types</h2>
+                <p class="lead text-muted">Ready-to-use templates for common coaching scenarios</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="coach-type-card text-center p-4">
+                        <div class="coach-icon bg-primary text-white rounded-circle mx-auto mb-3">
+                            <i class="fas fa-briefcase fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Interview Coach</h5>
+                        <p class="text-muted small">Practice behavioral questions, technical interviews, and salary negotiations</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="coach-type-card text-center p-4">
+                        <div class="coach-icon bg-success text-white rounded-circle mx-auto mb-3">
+                            <i class="fas fa-handshake fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Sales Trainer</h5>
+                        <p class="text-muted small">Improve objection handling, closing techniques, and customer relationships</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="coach-type-card text-center p-4">
+                        <div class="coach-icon bg-info text-white rounded-circle mx-auto mb-3">
+                            <i class="fas fa-language fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Language Tutor</h5>
+                        <p class="text-muted small">Practice conversations, pronunciation, and grammar in multiple languages</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="coach-type-card text-center p-4">
+                        <div class="coach-icon bg-warning text-white rounded-circle mx-auto mb-3">
+                            <i class="fas fa-presentation fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold">Presentation Coach</h5>
+                        <p class="text-muted small">Build confidence in public speaking and presentation delivery</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">How It Works</h2>
+                <p class="lead text-muted">Get started in minutes with our simple process</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="step-card text-center">
+                        <div class="step-number bg-primary text-white rounded-circle mx-auto mb-3">1</div>
+                        <h5 class="fw-bold">Create Your Coach</h5>
+                        <p class="text-muted">Choose a template or build a custom AI coach with specific expertise and personality traits.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="step-card text-center">
+                        <div class="step-number bg-primary text-white rounded-circle mx-auto mb-3">2</div>
+                        <h5 class="fw-bold">Schedule Sessions</h5>
+                        <p class="text-muted">Book coaching sessions at your convenience with flexible scheduling and session preferences.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="step-card text-center">
+                        <div class="step-number bg-primary text-white rounded-circle mx-auto mb-3">3</div>
+                        <h5 class="fw-bold">Start Coaching</h5>
+                        <p class="text-muted">Engage in real-time coaching sessions and track your progress over time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Ready to Transform Your Skills?</h2>
+            <p class="lead mb-4">Join thousands of users already improving with AI coaching</p>
+            <a href="/auth/register" class="btn btn-light btn-lg px-5">
+                <i class="fas fa-rocket me-2"></i>
+                Start Your Journey
+            </a>
+        </div>
+    </section>
+    
+    <style>
+    .hero-section {
+        background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+    }
+    
+    .min-vh-75 {
+        min-height: 75vh;
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .coach-type-card {
+        background: white;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .coach-type-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .coach-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .step-card {
+        padding: 2rem 1rem;
+    }
+    </style>
+    `}) %>

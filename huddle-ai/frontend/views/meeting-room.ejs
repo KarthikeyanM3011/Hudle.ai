@@ -1,0 +1,631 @@
+<%- include('layout', { body: `
+    <div class="container-fluid vh-100 d-flex flex-column">
+        <!-- Meeting Header -->
+        <div class="meeting-header bg-dark text-white p-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="fas fa-video me-2"></i>
+                        ${meeting && meeting.title ? meeting.title : 'Meeting'}
+                    </h5>
+                    <small class="text-muted">with ${meeting && meeting.coachName ? meeting.coachName : 'Coach'}</small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="meeting-controls">
+                        <button class="btn btn-sm btn-outline-light me-2" id="toggleMic">
+                            <i class="fas fa-microphone" id="micIcon"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light me-2" id="toggleVideo" style="display: none;">
+                            <i class="fas fa-video" id="videoIcon"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" id="leaveButton">
+                            <i class="fas fa-phone-slash me-1"></i>Leave
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Meeting Content -->
+        <div class="meeting-content flex-grow-1 d-flex">
+            <!-- Video/Avatar Area -->
+            <div class="video-area flex-grow-1 d-flex flex-column">
+                <!-- Main Video Container -->
+                <div class="main-video-container flex-grow-1 position-relative">
+                    <!-- Coach Display -->
+                    <div class="coach-display h-100 d-flex align-items-center justify-content-center bg-light">
+                        <div class="coach-avatar-large text-center">
+                            <% if (meeting && meeting.appearance && meeting.appearance.avatarUrl) { %>
+                                <img src="${meeting.appearance.avatarUrl}" alt="${meeting.coachName || 'Coach'}" 
+                                     class="avatar-image rounded-circle mb-3" id="coachAvatar">
+                            <% } else { %>
+                                <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-3" id="coachAvatar">
+                                    <i class="fas fa-robot fa-4x"></i>
+                                </div>
+                            <% } %>
+                            <h4 class="coach-name">${meeting && meeting.coachName ? meeting.coachName : 'Coach'}</h4>
+                            <div class="speaking-indicator" id="speakingIndicator">
+                                <div class="sound-wave">
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <!-- User Video (Picture-in-Picture) -->
+                    <div class="user-video-pip position-absolute" id="userVideoPip" style="display: none;">
+                        <video id="userVideo" autoplay muted class="w-100 h-100 rounded"></video>
+                        <div class="pip-label">You</div>
+                    </div>
+    
+                    <!-- Connection Status -->
+                    <div class="connection-status position-absolute top-0 start-0 m-3">
+                        <div class="status-indicator" id="connectionStatus">
+                            <i class="fas fa-circle text-success me-1"></i>
+                            <small>Connected</small>
+                        </div>
+                    </div>
+    
+                    <!-- Session Timer -->
+                    <div class="session-timer position-absolute top-0 end-0 m-3">
+                        <div class="timer-display bg-dark text-white px-3 py-1 rounded">
+                            <i class="fas fa-clock me-1"></i>
+                            <span id="sessionTimer">00:00</span>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Meeting Controls -->
+                <div class="meeting-controls-bottom bg-white p-3 border-top">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="volume-control d-flex align-items-center">
+                                <i class="fas fa-volume-up me-2"></i>
+                                <input type="range" class="form-range" id="volumeControl" min="0" max="100" value="75">
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-secondary" id="muteButton">
+                                    <i class="fas fa-microphone-slash"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" id="settingsButton">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" id="recordButton">
+                                    <i class="fas fa-record-vinyl"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-danger" id="endMeetingButton">
+                                <i class="fas fa-phone-slash me-2"></i>End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Chat Sidebar -->
+            <div class="chat-sidebar bg-light" id="chatSidebar">
+                <div class="chat-header bg-white p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Session Chat</h6>
+                        <button class="btn btn-sm btn-outline-secondary" id="toggleChat">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chat-messages flex-grow-1 p-3" id="chatMessages">
+                    <div class="system-message text-center text-muted mb-3">
+                        <small>Session started. You can type messages to supplement your voice conversation.</small>
+                    </div>
+                </div>
+                <div class="chat-input p-3 border-top">
+                    <form id="chatForm" class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" id="chatInput" 
+                               placeholder="Type a message..." maxlength="500">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Session Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="audioInput" class="form-label">Microphone</label>
+                        <select class="form-select" id="audioInput">
+                            <option>Loading devices...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="audioOutput" class="form-label">Speakers</label>
+                        <select class="form-select" id="audioOutput">
+                            <option>Loading devices...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="videoInputContainer" style="display: none;">
+                        <label for="videoInput" class="form-label">Camera</label>
+                        <select class="form-select" id="videoInput">
+                            <option>Loading devices...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="audioQuality" class="form-label">Audio Quality</label>
+                        <select class="form-select" id="audioQuality">
+                            <option value="standard">Standard</option>
+                            <option value="high" selected>High</option>
+                            <option value="studio">Studio</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="applySettings()">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Session End Modal -->
+    <div class="modal fade" id="endSessionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">End Session</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to end this coaching session?</p>
+                    <div class="mb-3">
+                        <label for="sessionFeedback" class="form-label">Session Feedback (Optional)</label>
+                        <textarea class="form-control" id="sessionFeedback" rows="3" 
+                                  placeholder="How was your session? Any feedback for improvement?"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sessionRating" class="form-label">Rate this session</label>
+                        <div class="rating-stars">
+                            <i class="fas fa-star rating-star" data-rating="1"></i>
+                            <i class="fas fa-star rating-star" data-rating="2"></i>
+                            <i class="fas fa-star rating-star" data-rating="3"></i>
+                            <i class="fas fa-star rating-star" data-rating="4"></i>
+                            <i class="fas fa-star rating-star" data-rating="5"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmEndSession()">End Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+    .meeting-header {
+        min-height: 60px;
+    }
+    
+    .meeting-content {
+        height: calc(100vh - 60px);
+    }
+    
+    .video-area {
+        position: relative;
+    }
+    
+    .chat-sidebar {
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid #dee2e6;
+    }
+    
+    .coach-avatar-large {
+        max-width: 400px;
+    }
+    
+    .avatar-image {
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .avatar-placeholder {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .user-video-pip {
+        bottom: 20px;
+        right: 20px;
+        width: 200px;
+        height: 150px;
+        border: 2px solid #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #000;
+    }
+    
+    .pip-label {
+        position: absolute;
+        bottom: 5px;
+        left: 5px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+    }
+    
+    .speaking-indicator {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .speaking-indicator.active {
+        opacity: 1;
+    }
+    
+    .sound-wave {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+        height: 30px;
+    }
+    
+    .sound-wave .bar {
+        width: 3px;
+        background: #007bff;
+        border-radius: 2px;
+        animation: soundWave 1s ease-in-out infinite;
+    }
+    
+    .sound-wave .bar:nth-child(2) { animation-delay: 0.1s; }
+    .sound-wave .bar:nth-child(3) { animation-delay: 0.2s; }
+    .sound-wave .bar:nth-child(4) { animation-delay: 0.3s; }
+    .sound-wave .bar:nth-child(5) { animation-delay: 0.4s; }
+    
+    @keyframes soundWave {
+        0%, 100% { height: 5px; }
+        50% { height: 20px; }
+    }
+    
+    .meeting-controls-bottom {
+        min-height: 80px;
+    }
+    
+    .chat-messages {
+        height: 300px;
+        overflow-y: auto;
+    }
+    
+    .system-message {
+        font-style: italic;
+    }
+    
+    .rating-stars {
+        font-size: 1.5rem;
+        color: #ddd;
+        cursor: pointer;
+    }
+    
+    .rating-star:hover,
+    .rating-star.active {
+        color: #ffc107;
+    }
+    
+    .connection-status {
+        background: rgba(255,255,255,0.9);
+        border-radius: 20px;
+        padding: 5px 10px;
+    }
+    
+    .timer-display {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .chat-sidebar {
+            position: absolute;
+            right: -300px;
+            top: 0;
+            height: 100%;
+            z-index: 1000;
+            transition: right 0.3s ease;
+        }
+        
+        .chat-sidebar.show {
+            right: 0;
+        }
+    }
+    </style>
+    
+    <script>
+    // Global variables
+    let meetingRoom = null;
+    let sessionStartTime = Date.now();
+    let timerInterval = null;
+    
+    // Initialize meeting room
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize meeting data
+        const meetingData = {
+            id: "<%= meeting && meeting.id ? meeting.id : '' %>",
+            title: "<%= meeting && meeting.title ? meeting.title : 'Meeting' %>",
+            coachName: "<%= meeting && meeting.coachName ? meeting.coachName : 'Coach' %>",
+            hasAvatar: "<%= meeting && meeting.appearance && meeting.appearance.avatarUrl ? 'true' : 'false' %>",
+            avatarUrl: "<%= meeting && meeting.appearance && meeting.appearance.avatarUrl ? meeting.appearance.avatarUrl : '' %>"
+        };
+
+        
+        initializeMeetingRoom(meetingData);
+        startSessionTimer();
+        loadMediaDevices();
+    });
+    
+    // Initialize meeting room functionality
+    function initializeMeetingRoom(meetingData) {
+        console.log('Initializing meeting room with data:', meetingData);
+        
+        // Set up basic UI elements
+        document.querySelector('.coach-name').textContent = meetingData.coachName;
+        
+        // Initialize controls
+        setupMeetingControls();
+        setupChatFunctionality();
+    }
+    
+    // Setup meeting controls
+    function setupMeetingControls() {
+        const toggleMic = document.getElementById('toggleMic');
+        const muteButton = document.getElementById('muteButton');
+        const volumeControl = document.getElementById('volumeControl');
+        
+        toggleMic.addEventListener('click', function() {
+            const icon = document.getElementById('micIcon');
+            const isMuted = icon.classList.contains('fa-microphone-slash');
+            
+            if (isMuted) {
+                icon.classList.remove('fa-microphone-slash');
+                icon.classList.add('fa-microphone');
+                this.classList.remove('btn-outline-danger');
+                this.classList.add('btn-outline-light');
+            } else {
+                icon.classList.remove('fa-microphone');
+                icon.classList.add('fa-microphone-slash');
+                this.classList.remove('btn-outline-light');
+                this.classList.add('btn-outline-danger');
+            }
+        });
+        
+        muteButton.addEventListener('click', function() {
+            toggleMic.click();
+        });
+        
+        volumeControl.addEventListener('input', function() {
+            // Handle volume control
+            console.log('Volume set to:', this.value);
+        });
+    }
+    
+    // Setup chat functionality
+    function setupChatFunctionality() {
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (message) {
+                addChatMessage(message, true);
+                chatInput.value = '';
+                
+                // Simulate coach response
+                setTimeout(() => {
+                    addChatMessage('I understand. Let me help you with that.', false);
+                }, 1000);
+            }
+        });
+    }
+    
+    // Add message to chat
+    function addChatMessage(message, isUser = false) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message mb-2';
+        
+        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageDiv.innerHTML = 
+            '<div class="d-flex ' + (isUser ? 'justify-content-end' : '') + '">' +
+                '<div class="message-bubble ' + (isUser ? 'bg-primary text-white' : 'bg-white') + ' p-2 rounded" style="max-width: 80%;">' +
+                    '<div class="fw-bold small">' + (isUser ? 'You' : "<%= meeting && meeting.coachName ? meeting.coachName : 'Coach' %>") + '</div>'+
+                    '<div>' + message + '</div>' +
+                    '<div class="text-muted small">' + timestamp + '</div>' +
+                '</div>' +
+            '</div>';
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Start session timer
+    function startSessionTimer() {
+        const timerElement = document.getElementById('sessionTimer');
+        
+        timerInterval = setInterval(() => {
+            const elapsed = Date.now() - sessionStartTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            timerElement.textContent = 
+                minutes.toString().padStart(2, '0') + ':' + 
+                seconds.toString().padStart(2, '0');
+        }, 1000);
+    }
+    
+    // Load available media devices
+    async function loadMediaDevices() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            
+            const audioInputs = devices.filter(device => device.kind === 'audioinput');
+            const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+            const videoInputs = devices.filter(device => device.kind === 'videoinput');
+            
+            populateDeviceSelect('audioInput', audioInputs);
+            populateDeviceSelect('audioOutput', audioOutputs);
+            populateDeviceSelect('videoInput', videoInputs);
+            
+            if (videoInputs.length > 0) {
+                document.getElementById('videoInputContainer').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading media devices:', error);
+        }
+    }
+    
+    // Populate device select options
+    function populateDeviceSelect(selectId, devices) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        
+        if (devices.length === 0) {
+            select.innerHTML = '<option>No devices found</option>';
+            return;
+        }
+        
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || 'Device ' + (devices.indexOf(device) + 1);
+            select.appendChild(option);
+        });
+    }
+    
+    // Rating system
+    document.querySelectorAll('.rating-star').forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            document.querySelectorAll('.rating-star').forEach((s, index) => {
+                s.classList.toggle('active', index < rating);
+            });
+        });
+    });
+    
+    // Apply settings
+    function applySettings() {
+        const audioInput = document.getElementById('audioInput').value;
+        const audioOutput = document.getElementById('audioOutput').value;
+        const videoInput = document.getElementById('videoInput').value;
+        const audioQuality = document.getElementById('audioQuality').value;
+        
+        console.log('Applying settings:', {
+            audioInput,
+            audioOutput,
+            videoInput,
+            audioQuality
+        });
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+    
+    // End session with feedback
+    function confirmEndSession() {
+        const feedback = document.getElementById('sessionFeedback').value;
+        const rating = document.querySelectorAll('.rating-star.active').length;
+        
+        const meetingId = "<%= meeting && meeting.id ? meeting.id : '' %>";
+        
+        // Stop timer
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+        
+        // Submit feedback to server
+        if (meetingId) {
+            fetch('/meetings/' + meetingId + '/end', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    feedback: {
+                        comment: feedback,
+                        rating: rating,
+                        submittedAt: new Date().toISOString()
+                    }
+                })
+            }).then(() => {
+                window.location.href = '/meetings/' + meetingId;
+            }).catch(error => {
+                console.error('Error submitting feedback:', error);
+                window.location.href = '/meetings';
+            });
+        } else {
+            window.location.href = '/meetings';
+        }
+    }
+    
+    // Event listeners
+    document.getElementById('leaveButton').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('endSessionModal'));
+        modal.show();
+    });
+    
+    document.getElementById('endMeetingButton').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('endSessionModal'));
+        modal.show();
+    });
+    
+    document.getElementById('settingsButton').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+        modal.show();
+    });
+    
+    document.getElementById('toggleChat').addEventListener('click', function() {
+        document.getElementById('chatSidebar').classList.toggle('show');
+    });
+    
+    document.getElementById('recordButton').addEventListener('click', function() {
+        const icon = this.querySelector('i');
+        const isRecording = icon.classList.contains('fa-stop');
+        
+        if (isRecording) {
+            icon.classList.remove('fa-stop');
+            icon.classList.add('fa-record-vinyl');
+            this.classList.remove('btn-danger');
+            this.classList.add('btn-outline-secondary');
+        } else {
+            icon.classList.remove('fa-record-vinyl');
+            icon.classList.add('fa-stop');
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-danger');
+        }
+    });
+    </script>
+` }) %>

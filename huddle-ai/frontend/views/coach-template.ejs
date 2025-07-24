@@ -1,0 +1,323 @@
+<%- include('layout', { body: `
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-template me-2"></i>
+                            Create from Template: ${template.name}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Template Info -->
+                        <div class="alert alert-info">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="alert-heading mb-2">${template.name}</h5>
+                                    <p class="mb-1">${template.description}</p>
+                                    <small class="text-muted">
+                                        Category: ${template.category.charAt(0).toUpperCase() + template.category.slice(1)} • 
+                                        Difficulty: ${template.difficulty.charAt(0).toUpperCase() + template.difficulty.slice(1)} • 
+                                        Used ${template.timesUsed || 0} times
+                                    </small>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="template-rating">
+                                        <% const rating = template.avgRating || 0; %>
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star ${i <= rating ? 'text-warning' : 'text-muted'}"></i>
+                                        <% } %>
+                                        <span class="ms-2">${rating.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <form id="templateForm" action="/coaches/create" method="POST">
+                            <input type="hidden" name="creationType" value="template">
+                            <input type="hidden" name="baseTemplateId" value="${template.id}">
+                            
+                            <!-- Basic Customization -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Customize Your Coach</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="name" class="form-label">Coach Name *</label>
+                                            <input type="text" class="form-control" id="name" name="name" 
+                                                   value="${template.name}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="customDomain" class="form-label">Focus Area</label>
+                                            <input type="text" class="form-control" id="customDomain" name="expertise[customDomain]" 
+                                                   placeholder="e.g., Technical Interviews, B2B Sales, Spanish Conversation">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" 
+                                              placeholder="Describe what makes this coach unique...">${template.description}</textarea>
+                                </div>
+                            </div>
+    
+                            <!-- Personality Adjustments -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Personality Adjustments</h5>
+                                <p class="text-muted mb-3">Fine-tune the default personality traits for your specific needs:</p>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="communicationStyle" class="form-label">Communication Style</label>
+                                            <select class="form-select" id="communicationStyle" name="personality[communicationStyle]">
+                                                <option value="${template.defaultPersonality?.communicationStyle || 'supportive'}" selected>
+                                                    ${(template.defaultPersonality?.communicationStyle || 'supportive').charAt(0).toUpperCase() + (template.defaultPersonality?.communicationStyle || 'supportive').slice(1)} (Default)
+                                                </option>
+                                                <option value="formal">Formal</option>
+                                                <option value="casual">Casual</option>
+                                                <option value="encouraging">Encouraging</option>
+                                                <option value="challenging">Challenging</option>
+                                                <option value="supportive">Supportive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="approachMethod" class="form-label">Coaching Approach</label>
+                                            <select class="form-select" id="approachMethod" name="personality[approachMethod]">
+                                                <option value="${template.defaultPersonality?.approachMethod || 'balanced'}" selected>
+                                                    ${(template.defaultPersonality?.approachMethod || 'balanced').charAt(0).toUpperCase() + (template.defaultPersonality?.approachMethod || 'balanced').slice(1)} (Default)
+                                                </option>
+                                                <option value="socratic">Socratic Questioning</option>
+                                                <option value="direct">Direct Instruction</option>
+                                                <option value="supportive">Supportive Guidance</option>
+                                                <option value="goal-oriented">Goal-Oriented</option>
+                                                <option value="exploratory">Exploratory</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Trait Adjustments -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="empathy" class="form-label">Empathy Level</label>
+                                            <input type="range" class="form-range" id="empathy" name="personality[traits][empathy]" 
+                                                   min="1" max="10" value="${template.defaultPersonality?.traits?.empathy || 7}">
+                                            <div class="d-flex justify-content-between">
+                                                <small>Analytical</small>
+                                                <small id="empathyValue">${template.defaultPersonality?.traits?.empathy || 7}</small>
+                                                <small>Empathetic</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="directness" class="form-label">Directness</label>
+                                            <input type="range" class="form-range" id="directness" name="personality[traits][directness]" 
+                                                   min="1" max="10" value="${template.defaultPersonality?.traits?.directness || 6}">
+                                            <div class="d-flex justify-content-between">
+                                                <small>Gentle</small>
+                                                <small id="directnessValue">${template.defaultPersonality?.traits?.directness || 6}</small>
+                                                <small>Direct</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <!-- Avatar Selection -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Choose Avatar</h5>
+                                <div class="avatar-grid">
+                                    <% if (avatars && avatars.length > 0) { %>
+                                        <% avatars.forEach((avatar, index) => { %>
+                                            <div class="avatar-option">
+                                                <input type="radio" class="btn-check" name="appearance[avatarId]" 
+                                                       id="avatar${index}" value="${avatar.id}"
+                                                       ${index === 0 ? 'checked' : ''}>
+                                                <label class="btn btn-outline-primary avatar-label" for="avatar${index}">
+                                                    <img src="${avatar.url}" alt="${avatar.originalName}" class="avatar-img">
+                                                </label>
+                                                <small class="d-block mt-1">${avatar.mood}</small>
+                                            </div>
+                                        <% }); %>
+                                    <% } %>
+                                </div>
+                            </div>
+    
+                            <!-- Voice Selection -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Voice Configuration</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="voiceId" class="form-label">Voice Type</label>
+                                            <select class="form-select" id="voiceId" name="voice[voiceId]">
+                                                <option value="default-professional-male">Professional Male</option>
+                                                <option value="default-professional-female">Professional Female</option>
+                                                <option value="default-friendly-male">Friendly Male</option>
+                                                <option value="default-supportive-female">Supportive Female</option>
+                                                <option value="default-energetic-male">Energetic Male</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="voiceStability" class="form-label">Voice Stability</label>
+                                            <input type="range" class="form-range" id="voiceStability" name="voice[stability]" 
+                                                   min="0" max="1" step="0.1" value="0.6">
+                                            <div class="d-flex justify-content-between">
+                                                <small>Expressive</small>
+                                                <small id="stabilityValue">0.6</small>
+                                                <small>Consistent</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <!-- Sharing Options -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Sharing Options</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="isPublic" name="sharing[isPublic]">
+                                            <label class="form-check-label" for="isPublic">
+                                                Share publicly
+                                            </label>
+                                            <div class="form-text">Allow others to discover and use your customized coach</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <!-- Template Preview -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Template Preview</h5>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold">Default Expertise:</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Domain:</strong> ${template.defaultExpertise?.primaryDomain || 'General'}</li>
+                                            <% if (template.defaultExpertise && template.defaultExpertise.specializations) { %>
+                                                <li><strong>Specializations:</strong> ${template.defaultExpertise.specializations.join(', ')}</li>
+                                            <% } %>
+                                            <li><strong>Experience:</strong> ${template.defaultExpertise?.experienceLevel || 'Intermediate'}</li>
+                                        </ul>
+                                        
+                                        <h6 class="fw-bold mt-3">Sample Coaching Style:</h6>
+                                        <p class="text-muted fst-italic">
+                                            "${(template.promptTemplate || 'This coach is ready to help you achieve your goals').substring(0, 200)}..."
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-between">
+                                <a href="/coaches/create" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Creation
+                                </a>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary me-2" onclick="previewCoach()">
+                                        <i class="fas fa-eye me-2"></i>Preview
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-rocket me-2"></i>Create Coach
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+    .avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 15px;
+    }
+    
+    .avatar-option {
+        text-align: center;
+    }
+    
+    .avatar-label {
+        width: 90px;
+        height: 90px;
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .avatar-label:hover {
+        transform: scale(1.05);
+    }
+    
+    .avatar-img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    
+    .btn-check:checked + .avatar-label {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        transform: scale(1.1);
+    }
+    
+    .template-rating {
+        font-size: 0.9rem;
+    }
+    </style>
+    
+    <script>
+    // Update range slider values
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+        const valueSpan = document.getElementById(slider.id + 'Value');
+        if (valueSpan) {
+            valueSpan.textContent = slider.value;
+            slider.addEventListener('input', () => {
+                valueSpan.textContent = slider.value;
+            });
+        }
+    });
+    
+    function previewCoach() {
+        const formData = new FormData(document.getElementById('templateForm'));
+        const coachData = {};
+        
+        for (let [key, value] of formData.entries()) {
+            coachData[key] = value;
+        }
+        
+        // Show preview modal with coach configuration
+        alert('Preview: Your coach will be created with the selected customizations applied to the template base.');
+    }
+    
+    // Form submission validation
+    document.getElementById('templateForm').addEventListener('submit', function(e) {
+        const nameInput = document.getElementById('name');
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            alert('Please provide a name for your coach');
+            nameInput.focus();
+            return;
+        }
+    });
+    </script>
+` }) %>

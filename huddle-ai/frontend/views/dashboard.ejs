@@ -1,0 +1,291 @@
+<%- include('layout', { body: `
+    <div class="container py-4">
+        <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 fw-bold">Welcome back, <%= user.firstName %>!</h1>
+                        <p class="text-muted mb-0">Ready for your next coaching session?</p>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <a href="/coaches/create" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Coach
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="fw-bold"><%= coaches.length %></h4>
+                                <p class="mb-0">AI Coaches</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-robot fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="fw-bold"><%= recentMeetings.length %></h4>
+                                <p class="mb-0">Recent Sessions</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-video fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="fw-bold">24h</h4>
+                                <p class="mb-0">Total Hours</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-warning text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="fw-bold">92%</h4>
+                                <p class="mb-0">Progress Score</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="row">
+            <!-- My Coaches Section -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>My AI Coaches
+                        </h5>
+                        <a href="/coaches" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <% if (coaches.length > 0) { %>
+                            <div class="row">
+                                <% coaches.forEach(coach => { %>
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="coach-card">
+                                            <div class="coach-avatar mb-2">
+                                                <% if (coach.appearance && coach.appearance.avatarUrl) { %>
+                                                    <img src="<%= coach.appearance.avatarUrl %>" alt="<%= coach.name %>" class="rounded-circle">
+                                                <% } else { %>
+                                                    <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-robot"></i>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                            <h6 class="fw-bold"><%= coach.name %></h6>
+                                            <p class="text-muted small mb-2"><%= coach.expertise?.primaryDomain || 'General' %></p>
+                                            <div class="btn-group btn-group-sm w-100">
+                                                <a href="/meetings/schedule/<%= coach.id %>" class="btn btn-primary">
+                                                    <i class="fas fa-play me-1"></i>Start
+                                                </a>
+                                                <a href="/coaches/<%= coach.id %>" class="btn btn-outline-primary">
+                                                    <i class="fas fa-edit me-1"></i>Edit
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-4">
+                                <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No coaches created yet</h6>
+                                <p class="text-muted">Create your first AI coach to get started</p>
+                                <a href="/coaches/create" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Create Your First Coach
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Quick Actions & Recent Activity -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/coaches/create" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-2"></i>Create New Coach
+                            </a>
+                            <a href="/meetings" class="btn btn-outline-success">
+                                <i class="fas fa-calendar me-2"></i>View Meetings
+                            </a>
+                            <a href="/coaches?template=interview" class="btn btn-outline-info">
+                                <i class="fas fa-briefcase me-2"></i>Interview Practice
+                            </a>
+                            <a href="/coaches?template=sales" class="btn btn-outline-warning">
+                                <i class="fas fa-handshake me-2"></i>Sales Training
+                            </a>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (recentMeetings.length > 0) { %>
+                            <div class="activity-feed">
+                                <% recentMeetings.slice(0, 5).forEach(meeting => { %>
+                                    <div class="activity-item d-flex align-items-center mb-3">
+                                        <div class="activity-icon bg-primary text-white rounded-circle me-3">
+                                            <i class="fas fa-video"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-semibold"><%= meeting.title %></h6>
+                                            <small class="text-muted">
+                                                with <%= meeting.coachName %> • 
+                                                <%= new Date(meeting.scheduledFor).toLocaleDateString() %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-3">
+                                <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No recent activity</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Popular Templates Section -->
+        <% if (popularTemplates && popularTemplates.length > 0) { %>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-fire me-2"></i>Popular Coach Templates
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <% popularTemplates.forEach(template => { %>
+                                <div class="col-md-4 col-lg-2 mb-3">
+                                    <div class="template-card text-center p-3">
+                                        <div class="template-icon bg-<%= template.category === 'interview' ? 'primary' : template.category === 'sales' ? 'success' : template.category === 'language' ? 'info' : 'warning' %> text-white rounded-circle mx-auto mb-2">
+                                            <i class="fas fa-<%= template.category === 'interview' ? 'briefcase' : template.category === 'sales' ? 'handshake' : template.category === 'language' ? 'language' : 'presentation' %>"></i>
+                                        </div>
+                                        <h6 class="fw-semibold"><%= template.name %></h6>
+                                        <p class="text-muted small mb-2"><%= template.description.substring(0, 50) %>...</p>
+                                        <a href="/coaches/template/<%= template.id %>" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-rocket me-1"></i>Use Template
+                                        </a>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+    
+    <style>
+    .coach-card {
+        text-align: center;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .coach-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .coach-avatar img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+    }
+    
+    .avatar-placeholder {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+    }
+    
+    .template-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .template-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    </style>
+    `}) %>
