@@ -1,11 +1,13 @@
 import React from 'react';
-import { Mic, MicOff, PhoneOff, MessageSquare, StopCircle } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, StopCircle } from 'lucide-react';
 
 const MeetingControls = ({
   isRecording,
   isMuted,
+  isVideoOff,
   onToggleRecording,
   onToggleMute,
+  onToggleVideo,
   onEndMeeting,
   onOpenChat,
   onStopSpeaking,
@@ -13,6 +15,7 @@ const MeetingControls = ({
 }) => {
   return (
     <div className="meeting-controls">
+      {/* Mute Button */}
       <button
         onClick={onToggleMute}
         disabled={disabled}
@@ -22,6 +25,17 @@ const MeetingControls = ({
         {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
       </button>
 
+      {/* Video Toggle Button */}
+      <button
+        onClick={onToggleVideo}
+        disabled={disabled}
+        className={`control-button ${isVideoOff ? 'muted' : 'active'}`}
+        title={isVideoOff ? 'Turn Video On' : 'Turn Video Off'}
+      >
+        {isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
+      </button>
+
+      {/* Recording Button */}
       <button
         onClick={onToggleRecording}
         disabled={disabled}
@@ -31,6 +45,7 @@ const MeetingControls = ({
         <Mic size={20} />
       </button>
 
+      {/* Stop Speaking Button - only show when recording */}
       {isRecording && (
         <button
           onClick={onStopSpeaking}
@@ -42,6 +57,7 @@ const MeetingControls = ({
         </button>
       )}
 
+      {/* Chat Button */}
       <button
         onClick={onOpenChat}
         disabled={disabled}
@@ -51,6 +67,7 @@ const MeetingControls = ({
         <MessageSquare size={20} />
       </button>
 
+      {/* End Meeting Button */}
       <button
         onClick={onEndMeeting}
         disabled={disabled}

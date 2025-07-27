@@ -40,7 +40,9 @@ export const meetingsAPI = {
   getAll: () => api.get('/meetings'),
   getByUuid: (uuid) => api.get(`/meetings/${uuid}`),
   start: (uuid) => api.put(`/meetings/${uuid}/start`),
-  end: (uuid, transcript) => api.put(`/meetings/${uuid}/end`, { transcript }),
+  end: (uuid, transcript = '') => api.put(`/meetings/${uuid}/end`, null, {
+    params: { transcript }
+  }),
   update: (uuid, data) => api.put(`/meetings/${uuid}`, data),
 };
 
@@ -62,6 +64,7 @@ export const aiProfilesAPI = {
 export const chatAPI = {
   getHistory: (meetingUuid) => api.get(`/chat/${meetingUuid}/messages`),
   sendMessage: (meetingUuid, message) => api.post(`/chat/${meetingUuid}/send`, { message }),
+  generateResponse: (meetingUuid, message) => api.post(`/chat/${meetingUuid}/generate-response`, { message }),
 };
 
 export const audioAPI = {
@@ -79,6 +82,15 @@ export const audioAPI = {
     return api.post(`/audio/${meetingUuid}/transcribe`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+  },
+  synthesize: (meetingUuid, text) => {
+    return api.post(`/audio/${meetingUuid}/synthesize`, null, {
+      params: { text },
+      responseType: 'blob',
+    });
+  },
+  testTts: (meetingUuid) => {
+    return api.get(`/audio/${meetingUuid}/test-tts`);
   },
 };
 

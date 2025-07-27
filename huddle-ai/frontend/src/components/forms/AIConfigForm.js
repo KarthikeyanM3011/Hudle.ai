@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { aiProfilesAPI } from '../../services/api';
-import { GENDER_OPTIONS, COACH_ROLES, DOMAIN_EXPERTISE } from '../../utils/constants';
+import { GENDER_OPTIONS, COACH_ROLES, DOMAIN_EXPERTISE, normalizeGender } from '../../utils/constants';
 import { Upload, X, FileText } from 'lucide-react';
 
 const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
@@ -9,7 +9,7 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
     coach_role: '',
     coach_description: '',
     domain_expertise: '',
-    gender: 'male',
+    gender: 'MALE',
     user_notes: '',
   });
   const [selectedFile, setSelectedFile] = useState(null);
@@ -17,6 +17,11 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Refs to prevent multiple submissions
+  const submitButtonRef = useRef(null);
+  const lastSubmissionRef = useRef(0);
 
   useEffect(() => {
     if (profileId) {
@@ -26,27 +31,42 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
 
   const loadProfile = async () => {
     try {
+      setLoading(true);
       const response = await aiProfilesAPI.getById(profileId);
       const profile = response.data;
+      
+      // Normalize gender when loading
+      const normalizedGender = normalizeGender(profile.gender);
+      
       setFormData({
         coach_name: profile.coach_name,
         coach_role: profile.coach_role,
         coach_description: profile.coach_description,
         domain_expertise: profile.domain_expertise,
-        gender: profile.gender,
+        gender: normalizedGender,
         user_notes: profile.user_notes || '',
       });
       setExistingFile(profile.pdf_filename || '');
       setIsEditing(true);
     } catch (error) {
       setError('Failed to load profile');
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleChange = (e) => {
+    let value = e.target.value;
+    
+    // Normalize gender if it's the gender field
+    if (e.target.name === 'gender') {
+      value = normalizeGender(value);
+    }
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     });
     setError('');
   };
@@ -74,29 +94,84 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent multiple rapid submissions
+    const now = Date.now();
+    if (now - lastSubmissionRef.current < 2000) { // 2 second cooldown
+      console.log('Submission blocked - too rapid');
+      return;
+    }
+    
+    if (submitting) {
+      console.log('Submission blocked - already submitting');
+      return;
+    }
+
+    lastSubmissionRef.current = now;
+    setSubmitting(true);
     setLoading(true);
     setError('');
 
+    // Disable submit button
+    if (submitButtonRef.current) {
+      submitButtonRef.current.disabled = true;
+    }
+
     try {
+      // Validate required fields
+      if (!formData.coach_name.trim()) {
+        throw new Error('Coach name is required');
+      }
+      if (!formData.coach_role.trim()) {
+        throw new Error('Coach role is required');
+      }
+      if (!formData.coach_description.trim()) {
+        throw new Error('Coach description is required');
+      }
+      if (!formData.domain_expertise.trim()) {
+        throw new Error('Domain expertise is required');
+      }
+
+      // Ensure gender is normalized before sending
+      const submissionData = {
+        ...formData,
+        gender: normalizeGender(formData.gender)
+      };
+
       let savedProfile;
       
       if (isEditing) {
-        const response = await aiProfilesAPI.update(profileId, formData);
+        console.log('Updating profile:', profileId);
+        const response = await aiProfilesAPI.update(profileId, submissionData);
         savedProfile = response.data;
       } else {
-        const response = await aiProfilesAPI.create(formData);
+        console.log('Creating new profile');
+        const response = await aiProfilesAPI.create(submissionData);
         savedProfile = response.data;
       }
 
-      if (selectedFile) {
+      // Upload PDF if selected
+      if (selectedFile && savedProfile) {
+        console.log('Uploading PDF...');
         await aiProfilesAPI.uploadPdf(savedProfile.id, selectedFile);
       }
 
+      console.log('Profile saved successfully');
       onSuccess();
+      
     } catch (error) {
-      setError(error.response?.data?.detail || 'Failed to save profile');
+      console.error('Profile save error:', error);
+      setError(error.response?.data?.detail || error.message || 'Failed to save profile');
     } finally {
       setLoading(false);
+      setSubmitting(false);
+      
+      // Re-enable submit button after a delay
+      setTimeout(() => {
+        if (submitButtonRef.current) {
+          submitButtonRef.current.disabled = false;
+        }
+      }, 1000);
     }
   };
 
@@ -120,7 +195,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
             required
             value={formData.coach_name}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            disabled={loading || submitting}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
             placeholder="e.g., Dr. Sarah Johnson"
           />
         </div>
@@ -135,7 +211,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
             required
             value={formData.coach_role}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            disabled={loading || submitting}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
           >
             <option value="">Select a role</option>
             {COACH_ROLES.map((role) => (
@@ -156,7 +233,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
             required
             value={formData.domain_expertise}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            disabled={loading || submitting}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
           >
             <option value="">Select expertise</option>
             {DOMAIN_EXPERTISE.map((domain) => (
@@ -177,7 +255,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
             required
             value={formData.gender}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            disabled={loading || submitting}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
           >
             {GENDER_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -199,7 +278,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
           rows={4}
           value={formData.coach_description}
           onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          disabled={loading || submitting}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
           placeholder="Describe the coach's personality, behavior, and coaching style..."
         />
       </div>
@@ -214,7 +294,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
           rows={3}
           value={formData.user_notes}
           onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          disabled={loading || submitting}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
           placeholder="Private notes for your reference..."
         />
       </div>
@@ -235,7 +316,8 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
             <button
               type="button"
               onClick={handleRemoveFile}
-              className="text-red-500 hover:text-red-700"
+              disabled={loading || submitting}
+              className="text-red-500 hover:text-red-700 disabled:opacity-50"
             >
               <X size={16} />
             </button>
@@ -255,6 +337,7 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
                   type="file"
                   accept=".pdf"
                   onChange={handleFileChange}
+                  disabled={loading || submitting}
                   className="hidden"
                 />
               </label>
@@ -270,16 +353,18 @@ const AIConfigForm = ({ profileId, onSuccess, onCancel }) => {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          disabled={loading || submitting}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
         <button
+          ref={submitButtonRef}
           type="submit"
-          disabled={loading}
-          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
+          disabled={loading || submitting}
+          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Saving...' : isEditing ? 'Update Profile' : 'Create Profile'}
+          {submitting ? 'Saving...' : loading ? 'Loading...' : isEditing ? 'Update Profile' : 'Create Profile'}
         </button>
       </div>
     </form>

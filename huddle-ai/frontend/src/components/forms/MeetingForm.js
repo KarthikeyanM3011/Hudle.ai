@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { meetingsAPI, aiProfilesAPI } from '../../services/api';
 import { Calendar, Clock } from 'lucide-react';
 
@@ -11,6 +11,11 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
   const [aiProfiles, setAiProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Refs to prevent multiple submissions
+  const submitButtonRef = useRef(null);
+  const lastSubmissionRef = useRef(0);
 
   useEffect(() => {
     loadAIProfiles();
@@ -18,10 +23,18 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
 
   const loadAIProfiles = async () => {
     try {
+      setLoading(true);
       const response = await aiProfilesAPI.getAll();
-      setAiProfiles(response.data);
+      // Remove duplicates by ID
+      const uniqueProfiles = Array.from(
+        new Map(response.data.map(profile => [profile.id, profile])).values()
+      );
+      setAiProfiles(uniqueProfiles);
     } catch (error) {
       setError('Failed to load AI profiles');
+      console.error('Error loading AI profiles:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,22 +48,63 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent multiple rapid submissions
+    const now = Date.now();
+    if (now - lastSubmissionRef.current < 2000) { // 2 second cooldown
+      console.log('Meeting submission blocked - too rapid');
+      return;
+    }
+    
+    if (submitting) {
+      console.log('Meeting submission blocked - already submitting');
+      return;
+    }
+
+    lastSubmissionRef.current = now;
+    setSubmitting(true);
     setLoading(true);
     setError('');
 
+    // Disable submit button
+    if (submitButtonRef.current) {
+      submitButtonRef.current.disabled = true;
+    }
+
     try {
+      // Validate required fields
+      if (!formData.title.trim()) {
+        throw new Error('Meeting title is required');
+      }
+      if (!formData.ai_profile_id) {
+        throw new Error('Please select an AI coach profile');
+      }
+
       const meetingData = {
         ...formData,
+        title: formData.title.trim(),
         ai_profile_id: parseInt(formData.ai_profile_id),
         scheduled_at: formData.scheduled_at || null,
       };
 
+      console.log('Creating meeting:', meetingData);
       await meetingsAPI.create(meetingData);
+      console.log('Meeting created successfully');
       onSuccess();
+      
     } catch (error) {
-      setError(error.response?.data?.detail || 'Failed to create meeting');
+      console.error('Meeting creation error:', error);
+      setError(error.response?.data?.detail || error.message || 'Failed to create meeting');
     } finally {
       setLoading(false);
+      setSubmitting(false);
+      
+      // Re-enable submit button after a delay
+      setTimeout(() => {
+        if (submitButtonRef.current) {
+          submitButtonRef.current.disabled = false;
+        }
+      }, 1000);
     }
   };
 
@@ -65,7 +119,7 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
   };
 
   useEffect(() => {
-    if (formData.ai_profile_id && !formData.title) {
+    if (formData.ai_profile_id && !formData.title && aiProfiles.length > 0) {
       setFormData(prev => ({
         ...prev,
         title: generateDefaultTitle(),
@@ -92,7 +146,8 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
           required
           value={formData.title}
           onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          disabled={loading || submitting}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
           placeholder="Enter meeting title"
         />
       </div>
@@ -107,7 +162,8 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
           required
           value={formData.ai_profile_id}
           onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          disabled={loading || submitting}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
         >
           <option value="">Select an AI coach</option>
           {aiProfiles.map((profile) => (
@@ -116,7 +172,7 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
             </option>
           ))}
         </select>
-        {aiProfiles.length === 0 && (
+        {aiProfiles.length === 0 && !loading && (
           <p className="mt-1 text-sm text-red-600">
             No AI profiles available. Please create one first.
           </p>
@@ -134,8 +190,9 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
             name="scheduled_at"
             value={formData.scheduled_at}
             onChange={handleChange}
+            disabled={loading || submitting}
             min={new Date().toISOString().slice(0, 16)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 pr-10"
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 pr-10 disabled:bg-gray-100"
           />
           <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
         </div>
@@ -144,7 +201,7 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
         </p>
       </div>
 
-      {formData.ai_profile_id && (
+      {formData.ai_profile_id && aiProfiles.length > 0 && (
         <div className="bg-blue-50 p-4 rounded-lg">
           <h4 className="text-sm font-medium text-blue-900 mb-2">Selected Coach Preview</h4>
           {(() => {
@@ -179,16 +236,18 @@ const MeetingForm = ({ selectedProfileId, onSuccess, onCancel }) => {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          disabled={loading || submitting}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
         <button
+          ref={submitButtonRef}
           type="submit"
-          disabled={loading || aiProfiles.length === 0}
-          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
+          disabled={loading || submitting || aiProfiles.length === 0}
+          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Creating...' : formData.scheduled_at ? 'Schedule Meeting' : 'Start Now'}
+          {submitting ? 'Creating...' : loading ? 'Loading...' : formData.scheduled_at ? 'Schedule Meeting' : 'Start Now'}
         </button>
       </div>
     </form>

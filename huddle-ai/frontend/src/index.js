@@ -4,8 +4,5 @@ import './App.css';
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Remove React.StrictMode to prevent double execution of useEffect hooks
+root.render(<App />);
