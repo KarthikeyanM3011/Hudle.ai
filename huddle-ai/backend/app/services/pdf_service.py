@@ -1,7 +1,7 @@
 import fitz
 import os
 from typing import Optional
-from .core.config import settings
+from ..core.config import settings
 
 class PDFService:
     def __init__(self):

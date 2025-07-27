@@ -6,8 +6,8 @@ export const MEETING_STATUS = {
   };
   
   export const GENDER_OPTIONS = [
-    { value: 'male', label: 'Male' },
-    { value: 'female', label: 'Female' },
+    { value: 'MALE', label: 'MALE' },
+    { value: 'FEMALE', label: 'FEMALE' },
   ];
   
   export const COACH_ROLES = [

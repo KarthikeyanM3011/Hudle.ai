@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
-from .models.meeting import Meeting, MeetingStatus
-from .models.ai_profile import AIProfile
-from .models.chat import ChatHistory
-from .schemas.meeting import MeetingCreate, MeetingUpdate
-from .services.gemini_service import gemini_service
+from ..models.meeting import Meeting, MeetingStatus
+from ..models.ai_profile import AIProfile
+from ..models.chat import ChatHistory
+from ..schemas.meeting import MeetingCreate, MeetingUpdate
+from ..services.gemini_service import gemini_service
 from typing import List, Optional
 import uuid
 from datetime import datetime

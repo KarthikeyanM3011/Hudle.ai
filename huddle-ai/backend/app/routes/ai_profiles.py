@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from .core.database import get_db
-from .schemas.ai_profile import AIProfile, AIProfileCreate, AIProfileUpdate
-from .services.auth import get_current_user
-from .services.pdf_service import pdf_service
-from .models.user import User
-from .models.ai_profile import AIProfile as AIProfileModel
+from ..core.database import get_db
+from ..schemas.ai_profile import AIProfile, AIProfileCreate, AIProfileUpdate
+from ..services.auth import get_current_user
+from ..services.pdf_service import pdf_service
+from ..models.user import User
+from ..models.ai_profile import AIProfile as AIProfileModel, Gender
 
 router = APIRouter(prefix="/ai-profiles", tags=["ai-profiles"])
 
@@ -16,8 +16,11 @@ async def create_ai_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    gender = Gender(profile.gender)
+
     db_profile = AIProfileModel(
-        **profile.dict(),
+        **profile.dict(exclude={"gender"}),
+        gender=gender,
         created_by=current_user.id
     )
     db.add(db_profile)

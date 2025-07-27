@@ -1,6 +1,6 @@
 from deepgram import Deepgram
-from .core.config import settings
-from .models.ai_profile import Gender
+from ..core.config import settings
+from ..models.ai_profile import Gender
 import asyncio
 import aiohttp
 from typing import Optional

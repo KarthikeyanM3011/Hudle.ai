@@ -2,11 +2,11 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
-from core.database import Base
+from ..core.database import Base
 
 class Gender(enum.Enum):
-    MALE = "male"
-    FEMALE = "female"
+    male = "male"
+    female = "female"
 
 class AIProfile(Base):
     __tablename__ = "ai_profiles"

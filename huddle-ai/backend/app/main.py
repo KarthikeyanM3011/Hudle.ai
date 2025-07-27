@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from core.config import settings
-from core.database import engine
-from models import user, meeting, ai_profile, chat
-from routes import auth, meetings, ai_profiles, chat as chat_routes, audio
+from .core.config import settings
+from .core.database import engine
+from .models import user, meeting, ai_profile, chat
+from .routes import auth, meetings, ai_profiles, chat as chat_routes, audio
 import os
 
 user.Base.metadata.create_all(bind=engine)

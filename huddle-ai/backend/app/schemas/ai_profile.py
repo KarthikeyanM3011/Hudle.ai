@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from .models.ai_profile import Gender
+from ..models.ai_profile import Gender
 
 class AIProfileBase(BaseModel):
     coach_name: str

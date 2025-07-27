@@ -2,13 +2,13 @@ from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
-from .core.database import Base
+from ..core.database import Base
 
 class MeetingStatus(enum.Enum):
-    SCHEDULED = "scheduled"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
+    scheduled = "scheduled"
+    active = "active"
+    completed = "completed"
+    cancelled = "cancelled"
 
 class Meeting(Base):
     __tablename__ = "meetings"
@@ -18,7 +18,7 @@ class Meeting(Base):
     title = Column(String(255), nullable=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     ai_profile_id = Column(Integer, ForeignKey("ai_profiles.id"), nullable=False)
-    status = Column(Enum(MeetingStatus), default=MeetingStatus.SCHEDULED)
+    status = Column(Enum(MeetingStatus), default=MeetingStatus.scheduled)
     scheduled_at = Column(DateTime(timezone=True))
     started_at = Column(DateTime(timezone=True))
     ended_at = Column(DateTime(timezone=True))
