@@ -332,7 +332,7 @@ const MeetingRoom = ({ meeting, aiProfile }) => {
               </div>
               
               {/* TTS Toggle */}
-              <button
+              {/* <button
                 onClick={() => setTtsEnabled(!ttsEnabled)}
                 className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${
                   ttsEnabled ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'
@@ -341,16 +341,16 @@ const MeetingRoom = ({ meeting, aiProfile }) => {
               >
                 {ttsEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
                 <span>TTS</span>
-              </button>
+              </button> */}
               
               {/* Debug Button */}
-              <button
+              {/* <button
                 onClick={testTTSService}
                 className="px-2 py-1 bg-blue-900 text-blue-200 rounded text-xs"
                 title="Test TTS Service"
               >
                 Test TTS
-              </button>
+              </button> */}
             </div>
           </div>
           
@@ -368,7 +368,7 @@ const MeetingRoom = ({ meeting, aiProfile }) => {
           )}
           
           {/* Audio Debug Info */}
-          {audioDebugInfo && (
+          {/* {audioDebugInfo && (
             <div className="mt-2 p-2 bg-gray-800 rounded text-xs">
               <div className="flex justify-between items-start">
                 <span className="text-gray-300">Debug Info:</span>
@@ -383,7 +383,7 @@ const MeetingRoom = ({ meeting, aiProfile }) => {
                 {audioDebugInfo}
               </pre>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Video Grid */}

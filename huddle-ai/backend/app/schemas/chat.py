@@ -17,4 +17,4 @@ class ChatMessage(ChatMessageBase):
         from_attributes = True
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str    

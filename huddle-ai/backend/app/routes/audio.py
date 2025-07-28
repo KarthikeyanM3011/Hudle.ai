@@ -28,6 +28,11 @@ def normalize_gender(gender):
     else:
         return "MALE"  # Default
 
+import unicodedata
+
+def sanitize_header_value(text: str) -> str:
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+
 @router.post("/{meeting_uuid}/process")
 async def process_audio(
     meeting_uuid: str,
@@ -141,8 +146,8 @@ async def process_audio(
             headers={
                 "Content-Disposition": "attachment; filename=response.wav",
                 "Content-Length": str(len(audio_response)),
-                "X-Transcript": transcript,
-                "X-AI-Response": ai_response,
+                "X-Transcript": sanitize_header_value(transcript),
+                "X-AI-Response": "Summa",
                 "X-User-Message-ID": str(user_message.id),
                 "X-AI-Message-ID": str(ai_message.id),
                 "X-Audio-Length": str(len(audio_response)),

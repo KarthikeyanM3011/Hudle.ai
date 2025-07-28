@@ -1,73 +1,38 @@
-from pydantic import BaseModel, validator
-from datetime import datetime
-from typing import Optional, Union
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from ..core.database import Base
 
-class AIProfileBase(BaseModel):
-    coach_name: str
-    coach_role: str
-    coach_description: str
-    domain_expertise: str
-    gender: str
-    user_notes: Optional[str] = None
+class AIProfile(Base):
+    __tablename__ = "ai_profiles"
     
-    @validator('gender')
-    def normalize_gender(cls, v):
-        """Normalize gender to uppercase"""
-        if not v:
-            return "MALE"
-        
-        gender_str = str(v).upper().strip()
-        
-        # Handle various formats
-        if gender_str in ['MALE', 'M', 'MAN']:
-            return "MALE"
-        elif gender_str in ['FEMALE', 'F', 'WOMAN']:
-            return "FEMALE"
-        else:
-            return "MALE"  # Default
-
-class AIProfileCreate(AIProfileBase):
-    pass
-
-class AIProfileUpdate(BaseModel):
-    coach_name: Optional[str] = None
-    coach_role: Optional[str] = None
-    coach_description: Optional[str] = None
-    domain_expertise: Optional[str] = None
-    gender: Optional[str] = None
-    user_notes: Optional[str] = None
-    pdf_content: Optional[str] = None
-    pdf_filename: Optional[str] = None
+    id = Column(Integer, primary_key=True, index=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    coach_name = Column(String(255), nullable=False)
+    coach_role = Column(String(255), nullable=False)
+    coach_description = Column(Text, nullable=False)
+    domain_expertise = Column(String(255), nullable=False)
+    gender = Column(String(10), nullable=False, default="MALE")  # Simple string field
+    user_notes = Column(Text)
+    pdf_content = Column(Text)
+    pdf_filename = Column(String(255))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    @validator('gender')
-    def normalize_gender(cls, v):
-        """Normalize gender to uppercase"""
-        if v is None:
-            return v
-            
-        gender_str = str(v).upper().strip()
-        
-        # Handle various formats
-        if gender_str in ['MALE', 'M', 'MAN']:
-            return "MALE"
-        elif gender_str in ['FEMALE', 'F', 'WOMAN']:
-            return "FEMALE"
-        else:
-            return "MALE"  # Default
+    creator = relationship("User", back_populates="ai_profiles")
+    meetings = relationship("Meeting", back_populates="ai_profile")
 
-class AIProfile(AIProfileBase):
-    id: int
-    created_by: int
-    pdf_content: Optional[str] = None
-    pdf_filename: Optional[str] = None
-    created_at: datetime
+def normalize_gender(gender_value):
+    """Normalize gender value to uppercase"""
+    if not gender_value:
+        return "MALE"
     
-    class Config:
-        from_attributes = True
-        
-    @validator('gender', pre=True)
-    def ensure_uppercase_gender(cls, v):
-        """Ensure gender is always uppercase in response"""
-        if not v:
-            return "MALE"
-        return str(v).upper()
+    gender_str = str(gender_value).upper().strip()
+    
+    # Handle various formats
+    if gender_str in ['MALE', 'M', 'MAN']:
+        return "MALE"
+    elif gender_str in ['FEMALE', 'F', 'WOMAN']:
+        return "FEMALE"
+    else:
+        return "MALE"  # Default

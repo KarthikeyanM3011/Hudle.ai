@@ -7,24 +7,9 @@ from ..schemas.ai_profile import AIProfile, AIProfileCreate, AIProfileUpdate
 from ..services.auth import get_current_user
 from ..services.pdf_service import pdf_service
 from ..models.user import User
-from ..models.ai_profile import AIProfile as AIProfileModel, Gender
+from ..models.ai_profile import AIProfile as AIProfileModel, normalize_gender
 
 router = APIRouter(prefix="/ai-profiles", tags=["ai-profiles"])
-
-def normalize_gender(gender_value):
-    """Normalize gender value to uppercase"""
-    if not gender_value:
-        return "MALE"
-    
-    gender_str = str(gender_value).upper().strip()
-    
-    # Handle various formats
-    if gender_str in ['MALE', 'M', 'MAN']:
-        return "MALE"
-    elif gender_str in ['FEMALE', 'F', 'WOMAN']:
-        return "FEMALE"
-    else:
-        return "MALE"  # Default
 
 @router.post("/", response_model=AIProfile)
 async def create_ai_profile(
@@ -45,15 +30,13 @@ async def create_ai_profile(
                 detail=f"AI profile with name '{profile.coach_name}' already exists"
             )
         
-        # Normalize gender
-        normalized_gender = normalize_gender(profile.gender)
-
+        # Create profile with normalized gender
         db_profile = AIProfileModel(
             coach_name=profile.coach_name,
             coach_role=profile.coach_role,
             coach_description=profile.coach_description,
             domain_expertise=profile.domain_expertise,
-            gender=normalized_gender,
+            gender=normalize_gender(profile.gender),
             user_notes=profile.user_notes,
             created_by=current_user.id
         )
@@ -93,7 +76,7 @@ async def get_my_ai_profiles(
                 seen_ids.add(profile.id)
                 unique_profiles.append(profile)
         
-        # Commit gender normalizations
+        # Commit gender normalizations if any changes were made
         if unique_profiles:
             db.commit()
         
@@ -117,7 +100,7 @@ async def get_ai_profile(
         if not profile:
             raise HTTPException(status_code=404, detail="AI Profile not found")
         
-        # Normalize gender
+        # Normalize gender for consistency
         profile.gender = normalize_gender(profile.gender)
         db.commit()
         
@@ -231,3 +214,30 @@ async def delete_ai_profile(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+
+@router.get("/{profile_id}/test")
+async def test_profile_fields(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Test endpoint to check profile field values"""
+    try:
+        profile = db.query(AIProfileModel).filter(
+            AIProfileModel.id == profile_id,
+            AIProfileModel.created_by == current_user.id
+        ).first()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="AI Profile not found")
+        
+        return {
+            "id": profile.id,
+            "coach_name": profile.coach_name,
+            "coach_role": profile.coach_role,
+            "gender": profile.gender,
+            "gender_type": type(profile.gender).__name__,
+            "normalized_gender": normalize_gender(profile.gender)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}")
